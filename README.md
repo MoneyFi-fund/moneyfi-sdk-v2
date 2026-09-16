@@ -119,6 +119,23 @@ const { vaults } = await moneyfi.vaults.list();
 const vault = await moneyfi.vaults.get(vaults[0].vaultId);
 ```
 
+## Partnership analytics and revenue
+
+Analytics calls use only the partnership SDK key. Amounts are returned as exact human-readable
+decimal strings in each asset's decimals:
+
+```ts
+const overview = await moneyfi.analytics.getOverview();
+console.log(overview.users.active, overview.byVault);
+
+const revenue = await moneyfi.analytics.getRevenue();
+console.log(revenue.calculationMode, revenue.byVault);
+```
+
+Revenue is a current-rate view: MoneyFi applies the partnership's current revenue-share BPS only
+to lifetime realized performance fees. Realized management fees remain visible but are excluded
+from partner revenue. It is not a paid or payable balance.
+
 ## Read beneficiary data
 
 Agency users must have an active SDK user session. A Vault partnership uses a registered managed
