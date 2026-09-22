@@ -2,6 +2,14 @@
   "name": "@moneyfi/sdk-v2",
   "version": "0.1.0",
   "description": "TypeScript SDK for MoneyFi Partner APIs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MoneyFi-fund/moneyfi-sdk-v2.git"
+  },
+  "homepage": "https://github.com/MoneyFi-fund/moneyfi-sdk-v2#readme",
+  "bugs": {
+    "url": "https://github.com/MoneyFi-fund/moneyfi-sdk-v2/issues"
+  },
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
