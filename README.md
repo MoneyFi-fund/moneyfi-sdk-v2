@@ -32,17 +32,6 @@ The SDK key is an authentication credential, not a publishable project ID. It do
 transfers from a user's wallet, but anyone who obtains it can call the APIs available to that
 partnership key.
 
-- **Vault partnership:** Keep the key on a trusted backend. Never embed it in a browser or mobile
-  bundle: key-only access includes managed-account reads and transaction preparation.
-- **Agency partnership:** A key used in a browser is observable and copyable by end users. Treat it
-  as public to those users. Wallet-specific positions, requests, activity, and transaction
-  preparation additionally require that wallet's scoped user session; do not rely on the SDK key
-  alone to protect sensitive data.
-
-MoneyFi enforces endpoint authorization in the BE. Browser-exposed Agency integrations also need
-gateway rate limiting (for example by key, IP, and registration address); verify that the gateway
-rules are active before public rollout.
-
 ## Connect a wallet
 
 MoneyFi currently supports EOA ownership verification. Pass any wallet integration that can sign
