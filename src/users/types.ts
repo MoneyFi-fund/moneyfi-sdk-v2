@@ -64,17 +64,6 @@ export interface RegisterUserInput extends RegistrationMessageInput {
   signMessage: SignRegistrationMessage;
 }
 
-export interface ListUsersInput extends PaginationInput {
-  externalUserId?: string;
-}
-
-export interface SdkUserList {
-  page: number;
-  limit: number;
-  total: number;
-  items: SdkUser[];
-}
-
 export interface UserPositionsInput {
   vaultId?: Address;
 }

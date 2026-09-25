@@ -6,13 +6,11 @@ import { address, externalUserId, pagination, signature } from "../core/validati
 import type { VaultPositions } from "../vaults/types";
 import type {
   Activity,
-  ListUsersInput,
   RegisterUserInput,
   RegistrationMessage,
   RegistrationMessageInput,
   SdkUser,
   SdkUserSession,
-  SdkUserList,
   SignedRegistrationInput,
   UserActivityInput,
   UserPositionsInput,
@@ -68,14 +66,7 @@ export class UsersClient {
     });
   }
 
-  list(input: ListUsersInput = {}): Promise<SdkUserList> {
-    pagination(input);
-    const external = externalUserId(input.externalUserId);
-    return this.http.request("/sdk/v2/users", {
-      query: { page: input.page, limit: input.limit, externalUserId: external ?? undefined },
-    });
-  }
-
+  /** Check active membership in this partnership integration; 404 means not registered here, not that the MoneyFi wallet is unknown. */
   get(userAddress: string): Promise<SdkUser> {
     return this.http.request(`/sdk/v2/users/${address(userAddress)}`);
   }

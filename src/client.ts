@@ -1,4 +1,3 @@
-import { AnalyticsClient } from "./analytics/client";
 import type { MoneyFiSdkConfig } from "./core/config";
 import { HttpClient } from "./core/http-client";
 import { UserSessionStore } from "./core/user-session";
@@ -7,7 +6,6 @@ import { UsersClient } from "./users/client";
 import { VaultsClient } from "./vaults/client";
 
 export class MoneyFiSdk {
-  readonly analytics: AnalyticsClient;
   readonly users: UsersClient;
   readonly vaults: VaultsClient;
   readonly transactions: TransactionsClient;
@@ -15,7 +13,6 @@ export class MoneyFiSdk {
   constructor(config: MoneyFiSdkConfig) {
     const http = new HttpClient(config);
     const sessions = new UserSessionStore();
-    this.analytics = new AnalyticsClient(http);
     this.users = new UsersClient(http, sessions);
     this.vaults = new VaultsClient(http);
     this.transactions = new TransactionsClient(http, sessions);

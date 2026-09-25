@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { MoneyFiSdk } from "../../src";
+import { MoneyFiSdk, MoneyFiValidationError } from "../../src";
 import {
   API_KEY,
   json,
@@ -87,5 +87,69 @@ describe("transaction APIs", () => {
     });
 
     expect(new Headers(fetch.mock.calls[0]![1]?.headers).get("Authorization")).toBeNull();
+  });
+
+  it("passes a read request epochId directly into prepareCancel", async () => {
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValueOnce(
+        json({
+          total: 1,
+          page: 1,
+          limit: 20,
+          nodes: [
+            {
+              vaultId: VAULT,
+              chainId: 56,
+              side: "REDEEM",
+              epochId: "7",
+              actions: { canCancel: true },
+            },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(json({}));
+    const sdk = new MoneyFiSdk({ apiKey: API_KEY, fetch });
+    const { nodes } = await sdk.users.requests(USER, { status: "PENDING" });
+    const request = nodes[0]!;
+    await sdk.transactions.prepareCancel({
+      user: USER,
+      chainId: request.chainId,
+      tokenAddress: TOKEN,
+      vaultId: request.vaultId,
+      epochId: request.epochId,
+      side: request.side,
+    });
+
+    expect(JSON.parse(String(fetch.mock.calls[1]![1]?.body))).toMatchObject({
+      epochId: 7,
+      side: "REDEEM",
+    });
+  });
+
+  it("rejects invalid or unsafe epoch IDs before calling the API", () => {
+    const fetch = vi.fn<typeof globalThis.fetch>();
+    const sdk = new MoneyFiSdk({ apiKey: API_KEY, fetch });
+    for (const epochId of [
+      "0",
+      "01",
+      "7.1",
+      "9007199254740992",
+      0,
+      Number.MAX_SAFE_INTEGER + 1,
+      -1n,
+    ]) {
+      expect(() =>
+        sdk.transactions.prepareCancel({
+          user: USER,
+          chainId: 56,
+          tokenAddress: TOKEN,
+          vaultId: VAULT,
+          epochId,
+          side: "DEPOSIT",
+        }),
+      ).toThrow(MoneyFiValidationError);
+    }
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

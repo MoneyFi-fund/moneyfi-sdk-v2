@@ -52,7 +52,7 @@ describe("user APIs", () => {
     expect(sdk.users.isAuthenticated(USER)).toBe(true);
   });
 
-  it("builds list, detail, position, request and activity routes", async () => {
+  it("builds membership lookup, position, request and activity routes", async () => {
     const responseUser = {
       address: USER,
       externalUserId: null,
@@ -78,7 +78,6 @@ describe("user APIs", () => {
       expiresAt: "2026-09-14T00:10:00Z",
       signature: SIGNATURE,
     });
-    await sdk.users.list({ externalUserId: "Case-Sensitive", page: 2, limit: 50 });
     await sdk.users.get(USER);
     await sdk.users.positions(USER, { vaultId: VAULT });
     await sdk.users.requests(USER, {
@@ -91,16 +90,14 @@ describe("user APIs", () => {
     await sdk.users.activity(USER, { vaultId: VAULT, page: 4, limit: 9 });
 
     const urls = fetch.mock.calls.map(([url]) => String(url));
-    expect(urls[1]).toContain("externalUserId=Case-Sensitive");
-    expect(urls[1]).toContain("page=2");
-    expect(urls[2]).toBe(`https://be.moneyfi.fund/sdk/v2/users/${USER}`);
-    expect(urls[3]).toContain(`/positions?vaultId=${VAULT}`);
-    expect(urls[4]).toContain("status=DONE");
-    expect(urls[4]).toContain("side=REDEEM");
-    expect(urls[5]).toContain("page=4");
+    expect(urls[1]).toBe(`https://be.moneyfi.fund/sdk/v2/users/${USER}`);
+    expect(urls[2]).toContain(`/positions?vaultId=${VAULT}`);
+    expect(urls[3]).toContain("status=DONE");
+    expect(urls[3]).toContain("side=REDEEM");
+    expect(urls[4]).toContain("page=4");
 
     expect(new Headers(fetch.mock.calls[1]![1]?.headers).get("Authorization")).toBeNull();
-    for (const index of [3, 4, 5]) {
+    for (const index of [2, 3, 4]) {
       expect(new Headers(fetch.mock.calls[index]![1]?.headers).get("Authorization")).toBe(
         `Bearer ${SDK_USER_TOKEN}`,
       );
@@ -113,10 +110,6 @@ describe("user APIs", () => {
   it("validates user inputs locally", () => {
     const sdk = new MoneyFiSdk({ apiKey: API_KEY, fetch: vi.fn() });
     expect(() => sdk.users.get("not-an-address")).toThrow(MoneyFiValidationError);
-    expect(() => sdk.users.list({ limit: 101 })).toThrow(MoneyFiValidationError);
-    expect(() => sdk.users.list({ externalUserId: " padded " })).toThrow(
-      MoneyFiValidationError,
-    );
     expect(() =>
       sdk.users.registerSigned({
         address: USER,

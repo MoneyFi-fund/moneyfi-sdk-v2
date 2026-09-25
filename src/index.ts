@@ -1,4 +1,3 @@
-export { AnalyticsClient } from "./analytics/client";
 export { MoneyFiSdk } from "./client";
 export {
   MoneyFiNetworkError,

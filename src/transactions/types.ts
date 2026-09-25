@@ -44,6 +44,6 @@ export interface PrepareCancelInput {
   chainId: number;
   tokenAddress: Address;
   vaultId: Address;
-  epochId: number;
+  epochId: string | number | bigint;
   side: RequestSide;
 }

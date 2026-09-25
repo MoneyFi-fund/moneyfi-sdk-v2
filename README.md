@@ -94,21 +94,17 @@ const prepared = await moneyfi.transactions.prepareRedeem({
 MoneyFi rejects addresses outside the partnership's managed allowlist. Each managed address may
 execute the returned calldata through its own EOA, contract, Safe, or smart-account execution flow.
 
-## Read Agency users
+## Check partner registration
 
 These calls require only the SDK key:
 
 ```ts
-const users = await moneyfi.users.list({
-  page: 1,
-  limit: 20,
-});
-
 const user = await moneyfi.users.get(walletAddress);
 ```
 
-`users.get()` can be used to check whether a wallet is registered with the Agency. The user list
-contains only users whose immutable MoneyFi referral belongs to the Agency.
+`users.get()` checks whether this wallet has an active registration with your partnership. A `404`
+means it is not registered with your integration; it does not mean the wallet is unknown to
+MoneyFi. Registration does not imply referral attribution or partner revenue.
 
 ## Read Vaults
 
@@ -118,23 +114,6 @@ Vault catalog and detail calls require only the SDK key:
 const { vaults } = await moneyfi.vaults.list();
 const vault = await moneyfi.vaults.get(vaults[0].vaultId);
 ```
-
-## Partnership analytics and revenue
-
-Analytics calls use only the partnership SDK key. Amounts are returned as exact human-readable
-decimal strings in each asset's decimals:
-
-```ts
-const overview = await moneyfi.analytics.getOverview();
-console.log(overview.users.active, overview.byVault);
-
-const revenue = await moneyfi.analytics.getRevenue();
-console.log(revenue.calculationMode, revenue.byVault);
-```
-
-Revenue is a current-rate view: MoneyFi applies the partnership's current revenue-share BPS only
-to lifetime realized performance fees. Realized management fees remain visible but are excluded
-from partner revenue. It is not a paid or payable balance.
 
 ## Read beneficiary data
 
@@ -221,13 +200,20 @@ MoneyFi validates the wallet's live share balance and returns the current asset 
 ## Cancel a request
 
 ```ts
+const { nodes } = await moneyfi.users.requests(walletAddress, {
+  vaultId,
+  status: "PENDING",
+});
+const request = nodes.find((node) => node.actions.canCancel);
+if (!request) throw new Error("No cancellable request");
+
 const prepared = await moneyfi.transactions.prepareCancel({
   user: walletAddress,
-  chainId: 56,
+  chainId: request.chainId,
   tokenAddress,
-  vaultId,
-  epochId: 7,
-  side: "DEPOSIT", // or "REDEEM"
+  vaultId: request.vaultId,
+  epochId: request.epochId,
+  side: request.side,
 });
 
 await walletClient.sendTransaction({

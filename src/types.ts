@@ -1,4 +1,3 @@
-export type * from "./analytics/types";
 export type * from "./core/types";
 export type * from "./transactions/types";
 export type * from "./users/types";

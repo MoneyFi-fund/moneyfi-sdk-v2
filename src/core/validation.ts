@@ -46,3 +46,15 @@ export function positiveSafeInteger(value: number, field: string): number {
   }
   return value;
 }
+
+export function positiveSafeEpochId(value: string | number | bigint): number {
+  if (typeof value === "number") return positiveSafeInteger(value, "epochId");
+  if (typeof value === "string" && !/^[1-9][0-9]*$/.test(value)) {
+    throw new MoneyFiValidationError("epochId must be a positive safe integer");
+  }
+  const parsed = BigInt(value);
+  if (parsed <= 0n || parsed > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new MoneyFiValidationError("epochId must be a positive safe integer");
+  }
+  return Number(parsed);
+}
