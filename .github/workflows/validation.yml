@@ -39,8 +39,5 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Validate package contents
-        run: pnpm pack --dry-run
-
       - name: Smoke test packed package
         run: pnpm test:package
