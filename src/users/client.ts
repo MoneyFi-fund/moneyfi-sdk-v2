@@ -1,15 +1,15 @@
 import type { HttpClient, RequestOptions } from "../core/http-client";
+import { MoneyFiNetworkError, MoneyFiValidationError } from "../core/errors";
 import type { Address } from "../core/types";
 import { UserSessionStore } from "../core/user-session";
 import type { Paginated } from "../core/types";
-import { address, externalUserId, pagination, signature } from "../core/validation";
+import { address, pagination, signature } from "../core/validation";
 import type { VaultPositions } from "../vaults/types";
 import type {
   Activity,
   RegisterUserInput,
   RegistrationMessage,
   RegistrationMessageInput,
-  SdkUser,
   SdkUserSession,
   SignedRegistrationInput,
   UserActivityInput,
@@ -27,12 +27,18 @@ export class UsersClient {
   registrationMessage(input: RegistrationMessageInput): Promise<RegistrationMessage> {
     return this.http.request("/sdk/v2/users/registration-message", {
       method: "POST",
-      body: registrationIdentity(input),
+      body: registrationIdentity(input, ["address"]),
     });
   }
 
   registerSigned(input: SignedRegistrationInput): Promise<SdkUserSession> {
-    const identity = registrationIdentity(input);
+    const identity = registrationIdentity(input, [
+      "address",
+      "messageVersion",
+      "issuedAt",
+      "expiresAt",
+      "signature",
+    ]);
     if (input.messageVersion !== 1) throw new TypeError("messageVersion must be 1");
     return this.http.request<SdkUserSession>("/sdk/v2/users", {
       method: "POST",
@@ -44,17 +50,27 @@ export class UsersClient {
         signature: signature(input.signature),
       },
     }).then((session) => {
-      this.sessions.set({
-        address: session.user.address,
+      const publicSession: SdkUserSession = {
+        user: {
+          address: address(session.user.address),
+          source: session.user.source,
+          createdAt: session.user.createdAt,
+        },
         accessToken: session.accessToken,
+        tokenType: session.tokenType,
         expiresAt: session.expiresAt,
+      };
+      this.sessions.set({
+        address: publicSession.user.address,
+        accessToken: publicSession.accessToken,
+        expiresAt: publicSession.expiresAt,
       });
-      return session;
+      return publicSession;
     });
   }
 
   async register(input: RegisterUserInput): Promise<SdkUserSession> {
-    const identity = registrationIdentity(input);
+    const identity = registrationIdentity(input, ["address", "signMessage"]);
     const proof = await this.registrationMessage(identity);
     const signed = await input.signMessage({ message: proof.message, address: identity.address });
     return this.registerSigned({
@@ -66,9 +82,15 @@ export class UsersClient {
     });
   }
 
-  /** Check active membership in this partnership integration; 404 means not registered here, not that the MoneyFi wallet is unknown. */
-  get(userAddress: string): Promise<SdkUser> {
-    return this.http.request(`/sdk/v2/users/${address(userAddress)}`);
+  /** Check active registration in this partnership without exposing mapping metadata. */
+  async isRegistered(userAddress: string): Promise<boolean> {
+    const result = await this.http.request<{ registered: boolean }>(
+      `/sdk/v2/users/${address(userAddress)}/registration`,
+    );
+    if (typeof result?.registered !== "boolean") {
+      throw new MoneyFiNetworkError("MoneyFi API returned an invalid registration status");
+    }
+    return result.registered;
   }
 
   positions(userAddress: string, input: UserPositionsInput = {}): Promise<VaultPositions> {
@@ -134,10 +156,12 @@ function userAuthorization(
   return accessToken === undefined ? {} : { accessToken };
 }
 
-function registrationIdentity(input: RegistrationMessageInput): RegistrationMessageInput {
-  const external = externalUserId(input.externalUserId);
-  return {
-    address: address(input.address),
-    ...(external !== undefined ? { externalUserId: external } : {}),
-  };
+function registrationIdentity(
+  input: RegistrationMessageInput,
+  allowedFields: readonly string[],
+): RegistrationMessageInput {
+  if (Object.keys(input).some((key) => !allowedFields.includes(key))) {
+    throw new MoneyFiValidationError("Unsupported registration input field");
+  }
+  return { address: address(input.address) };
 }

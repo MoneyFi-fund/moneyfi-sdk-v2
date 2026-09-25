@@ -20,7 +20,6 @@ export type ActivityType =
 
 export interface SdkUser {
   address: Address;
-  externalUserId: string | null;
   source: PartnershipUserSource;
   createdAt: DateTimeString;
 }
@@ -34,7 +33,6 @@ export interface SdkUserSession {
 
 export interface RegistrationMessageInput {
   address: Address;
-  externalUserId?: string | null;
 }
 
 export interface RegistrationMessage {

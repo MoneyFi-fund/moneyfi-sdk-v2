@@ -18,16 +18,6 @@ export function signature(value: string): Hex {
   return value as Hex;
 }
 
-export function externalUserId(value: string | null | undefined): string | null | undefined {
-  if (value === undefined || value === null) return value;
-  if (value.length === 0 || value.trim() !== value || [...value].length > 255) {
-    throw new MoneyFiValidationError(
-      "externalUserId must contain 1 to 255 characters without surrounding whitespace",
-    );
-  }
-  return value;
-}
-
 export function pagination(input: PaginationInput | undefined): void {
   if (input?.page !== undefined && (!Number.isSafeInteger(input.page) || input.page < 1)) {
     throw new MoneyFiValidationError("page must be a positive integer");

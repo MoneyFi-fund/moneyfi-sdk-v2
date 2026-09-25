@@ -18,7 +18,6 @@ describe("transaction APIs", () => {
         json({
           user: {
             address: USER,
-            externalUserId: null,
             source: "SDK",
             createdAt: "2026-09-14T00:00:01Z",
           } as const,

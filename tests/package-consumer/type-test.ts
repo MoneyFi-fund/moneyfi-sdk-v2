@@ -1,4 +1,8 @@
-import { MoneyFiSdk, type PrepareCancelInput } from "@moneyfi/sdk-v2";
+import {
+  MoneyFiSdk,
+  type PrepareCancelInput,
+  type RegistrationMessageInput,
+} from "@moneyfi/sdk-v2";
 
 const sdk = new MoneyFiSdk({ apiKey: "mf_sdk_test_example" });
 const cancel: PrepareCancelInput = {
@@ -11,3 +15,7 @@ const cancel: PrepareCancelInput = {
 };
 
 void sdk.transactions.prepareCancel(cancel);
+
+// @ts-expect-error Registration inputs accept only the wallet address.
+const unsupportedRegistration: RegistrationMessageInput = { address: cancel.user, metadata: "x" };
+void unsupportedRegistration;

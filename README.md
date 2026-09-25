@@ -2,8 +2,9 @@
 
 TypeScript SDK for integrating MoneyFi Vaults into Agency and Vault partnership applications.
 
-The SDK key identifies the partnership. Agency users receive an additional wallet-scoped session
-after signing a canonical EIP-191 message. A Vault partnership instead operates on the addresses
+The SDK key authenticates the partnership to MoneyFi Partner APIs. Agency users receive an
+additional wallet-scoped session after signing a canonical EIP-191 message. A Vault partnership
+instead operates on the addresses
 registered by its owner, which may be EOAs, contracts, multisigs, or smart accounts. MoneyFi never
 receives a private key and the SDK never signs or submits an on-chain transaction.
 
@@ -25,6 +26,23 @@ const moneyfi = new MoneyFiSdk({
 
 Create one `MoneyFiSdk` instance for the application and reuse it.
 
+## SDK key security
+
+The SDK key is an authentication credential, not a publishable project ID. It does not authorize
+transfers from a user's wallet, but anyone who obtains it can call the APIs available to that
+partnership key.
+
+- **Vault partnership:** Keep the key on a trusted backend. Never embed it in a browser or mobile
+  bundle: key-only access includes managed-account reads and transaction preparation.
+- **Agency partnership:** A key used in a browser is observable and copyable by end users. Treat it
+  as public to those users. Wallet-specific positions, requests, activity, and transaction
+  preparation additionally require that wallet's scoped user session; do not rely on the SDK key
+  alone to protect sensitive data.
+
+MoneyFi enforces endpoint authorization in the BE. Browser-exposed Agency integrations also need
+gateway rate limiting (for example by key, IP, and registration address); verify that the gateway
+rules are active before public rollout.
+
 ## Connect a wallet
 
 MoneyFi currently supports EOA ownership verification. Pass any wallet integration that can sign
@@ -33,7 +51,6 @@ an EIP-191 message:
 ```ts
 const session = await moneyfi.users.register({
   address: walletAddress,
-  externalUserId: currentUser.id, // optional, case-sensitive partner identifier
   signMessage: async ({ message, address }) => {
     return walletClient.signMessage({
       account: address,
@@ -48,7 +65,8 @@ console.log(session.expiresAt);
 
 `register()` creates the Agency mapping when needed and acts as an idempotent login when the exact
 mapping already exists. The returned JWT is scoped to the wallet and Agency for 24 hours. The SDK
-keeps it in memory and automatically attaches it only to owner-protected calls.
+keeps it in memory and automatically attaches it only to owner-protected calls. Registration via
+the SDK sends only the wallet address and signed proof fields.
 
 For an EIP-1193 provider:
 
@@ -96,15 +114,15 @@ execute the returned calldata through its own EOA, contract, Safe, or smart-acco
 
 ## Check partner registration
 
-These calls require only the SDK key:
+The registration check requires only the SDK key:
 
 ```ts
-const user = await moneyfi.users.get(walletAddress);
+const registered = await moneyfi.users.isRegistered(walletAddress);
 ```
 
-`users.get()` checks whether this wallet has an active registration with your partnership. A `404`
-means it is not registered with your integration; it does not mean the wallet is unknown to
-MoneyFi. Registration does not imply referral attribution or partner revenue.
+`users.isRegistered()` returns `true` only when this wallet has an active registration with your
+partnership. `false` does not reveal whether the wallet exists in MoneyFi. This endpoint does not
+return mapping details. Registration does not imply referral attribution or partner revenue.
 
 ## Read Vaults
 
