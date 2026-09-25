@@ -1,0 +1,42 @@
+{
+  "name": "@moneyfi/sdk-v2",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for MoneyFi Partner APIs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MoneyFi-fund/moneyfi-sdk-v2.git"
+  },
+  "homepage": "https://github.com/MoneyFi-fund/moneyfi-sdk-v2#readme",
+  "bugs": {
+    "url": "https://github.com/MoneyFi-fund/moneyfi-sdk-v2/issues"
+  },
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --sourcemap --clean",
+    "test": "vitest run",
+    "test:package": "node scripts/smoke-package.mjs",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm test && pnpm typecheck && pnpm build && pnpm test:package"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "publishConfig": { "access": "public" }
+}
