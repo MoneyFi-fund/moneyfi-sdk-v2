@@ -1,4 +1,4 @@
-import type { Address, Hex, RawAmountInput, RequestSide } from "../core/types";
+import type { Address, Hex, RawAmountInput, RawIntegerInput, RequestSide } from "../core/types";
 
 export interface TransactionPayload {
   to: Address;
@@ -44,6 +44,6 @@ export interface PrepareCancelInput {
   chainId: number;
   tokenAddress: Address;
   vaultId: Address;
-  epochId: string | number | bigint;
+  epochId: RawIntegerInput;
   side: RequestSide;
 }

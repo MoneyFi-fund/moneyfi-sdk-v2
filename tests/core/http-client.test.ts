@@ -30,7 +30,7 @@ describe("MoneyFiSdk transport", () => {
     expect(JSON.stringify(error)).not.toContain(API_KEY);
   });
 
-  it("normalizes network and timeout failures", async () => {
+  it("normalizes network failures", async () => {
     const fetch = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => {
       throw new Error(`request with ${API_KEY} failed`);
     });
@@ -38,6 +38,33 @@ describe("MoneyFiSdk transport", () => {
     const error = await sdk.vaults.list().catch((caught: unknown) => caught);
     expect(error).toBeInstanceOf(MoneyFiNetworkError);
     expect(String(error)).not.toContain(API_KEY);
+  });
+
+  it("aborts timed-out requests and returns a timeout error", async () => {
+    vi.useFakeTimers();
+    try {
+      let requestSignal: AbortSignal | undefined;
+      const fetch = vi.fn((_input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          requestSignal = init?.signal ?? undefined;
+          requestSignal?.addEventListener("abort", () => reject(new Error("aborted")), {
+            once: true,
+          });
+        }),
+      );
+      const sdk = new MoneyFiSdk({ apiKey: API_KEY, fetch, timeoutMs: 25 });
+      const pending = expect(sdk.vaults.list()).rejects.toMatchObject({
+        name: "MoneyFiNetworkError",
+        message: "MoneyFi API request timed out",
+      });
+
+      await vi.advanceTimersByTimeAsync(25);
+      await pending;
+      expect(requestSignal?.aborted).toBe(true);
+      expect(fetch).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("fails closed on malformed successful JSON", async () => {
@@ -53,6 +80,9 @@ describe("MoneyFiSdk transport", () => {
 
   it("rejects malformed credentials and config before a request", () => {
     expect(() => new MoneyFiSdk({ apiKey: "bad" })).toThrow(TypeError);
+    expect(() => new MoneyFiSdk({ apiKey: `mf_sdk_test_${"A".repeat(48)}` })).not.toThrow();
+    expect(() => new MoneyFiSdk({ apiKey: `${API_KEY} ` })).toThrow(TypeError);
+    expect(() => new MoneyFiSdk({ apiKey: `mf_sdk_test_${"A".repeat(43)}\n` })).toThrow(TypeError);
     expect(() => new MoneyFiSdk({ apiKey: API_KEY, testBaseUrl: "file:///tmp/api" })).toThrow(
       TypeError,
     );

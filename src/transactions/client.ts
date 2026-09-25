@@ -1,4 +1,4 @@
-import { address, positiveSafeEpochId, positiveSafeInteger } from "../core/validation";
+import { address, positiveEpochId, positiveSafeInteger } from "../core/validation";
 import type { HttpClient, RequestOptions } from "../core/http-client";
 import type { Address } from "../core/types";
 import { UserSessionStore } from "../core/user-session";
@@ -40,7 +40,7 @@ export class TransactionsClient {
       method: "POST",
       ...userAuthorization(this.sessions, user),
       body: transactionIdentity(input, {
-        epochId: positiveSafeEpochId(input.epochId),
+        epochId: positiveEpochId(input.epochId),
         side: input.side,
       }),
     });

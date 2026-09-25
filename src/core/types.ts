@@ -2,6 +2,7 @@ export type Address = `0x${string}`;
 export type Hex = `0x${string}`;
 export type DateTimeString = string;
 export type RawAmountInput = string | bigint;
+export type RawIntegerInput = string | number | bigint;
 export type RequestSide = "DEPOSIT" | "REDEEM";
 
 export interface PaginationInput {

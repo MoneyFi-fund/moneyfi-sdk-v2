@@ -225,6 +225,8 @@ await walletClient.sendTransaction({
 ```
 
 A request can be cancelled only when it is still pending in the current open epoch.
+The SDK accepts the `epochId` string returned by `users.requests()` directly and preserves its
+full uint64 precision in the request to MoneyFi.
 
 ## Error handling
 

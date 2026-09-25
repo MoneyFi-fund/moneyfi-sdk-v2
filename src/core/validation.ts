@@ -1,5 +1,5 @@
 import { MoneyFiValidationError } from "./errors";
-import type { Address, Hex, PaginationInput } from "./types";
+import type { Address, Hex, PaginationInput, RawIntegerInput } from "./types";
 
 const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 const EVM_SIGNATURE = /^0x[0-9a-fA-F]{130}$/;
@@ -47,14 +47,17 @@ export function positiveSafeInteger(value: number, field: string): number {
   return value;
 }
 
-export function positiveSafeEpochId(value: string | number | bigint): number {
-  if (typeof value === "number") return positiveSafeInteger(value, "epochId");
+export function positiveEpochId(value: RawIntegerInput): string {
+  if (typeof value === "number") return String(positiveSafeInteger(value, "epochId"));
   if (typeof value === "string" && !/^[1-9][0-9]*$/.test(value)) {
-    throw new MoneyFiValidationError("epochId must be a positive safe integer");
+    throw new MoneyFiValidationError("epochId must be a positive decimal uint64");
+  }
+  if (typeof value !== "string" && typeof value !== "bigint") {
+    throw new MoneyFiValidationError("epochId must be a positive decimal uint64");
   }
   const parsed = BigInt(value);
-  if (parsed <= 0n || parsed > BigInt(Number.MAX_SAFE_INTEGER)) {
-    throw new MoneyFiValidationError("epochId must be a positive safe integer");
+  if (parsed <= 0n || parsed > 18_446_744_073_709_551_615n) {
+    throw new MoneyFiValidationError("epochId must be a positive decimal uint64");
   }
-  return Number(parsed);
+  return parsed.toString();
 }

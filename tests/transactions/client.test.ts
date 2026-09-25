@@ -62,7 +62,7 @@ describe("transaction APIs", () => {
     const bodies = fetch.mock.calls.slice(1).map(([, init]) => JSON.parse(String(init?.body)));
     expect(bodies[0]).toMatchObject({ user: USER, amount: "100", chainId: 56 });
     expect(bodies[1]).toMatchObject({ user: USER, shares: "9", chainId: 56 });
-    expect(bodies[2]).toMatchObject({ user: USER, epochId: 7, side: "DEPOSIT" });
+    expect(bodies[2]).toMatchObject({ user: USER, epochId: "7", side: "DEPOSIT" });
     expect(fetch.mock.calls.slice(1).map(([url]) => String(url))).toEqual([
       "https://be.moneyfi.fund/sdk/v2/transactions/deposit",
       "https://be.moneyfi.fund/sdk/v2/transactions/redeem",
@@ -102,7 +102,7 @@ describe("transaction APIs", () => {
               vaultId: VAULT,
               chainId: 56,
               side: "REDEEM",
-              epochId: "7",
+              epochId: "18446744073709551615",
               actions: { canCancel: true },
             },
           ],
@@ -122,22 +122,23 @@ describe("transaction APIs", () => {
     });
 
     expect(JSON.parse(String(fetch.mock.calls[1]![1]?.body))).toMatchObject({
-      epochId: 7,
+      epochId: "18446744073709551615",
       side: "REDEEM",
     });
   });
 
-  it("rejects invalid or unsafe epoch IDs before calling the API", () => {
+  it("rejects malformed and out-of-range epoch IDs before calling the API", () => {
     const fetch = vi.fn<typeof globalThis.fetch>();
     const sdk = new MoneyFiSdk({ apiKey: API_KEY, fetch });
     for (const epochId of [
       "0",
       "01",
       "7.1",
-      "9007199254740992",
+      "18446744073709551616",
       0,
       Number.MAX_SAFE_INTEGER + 1,
       -1n,
+      18_446_744_073_709_551_616n,
     ]) {
       expect(() =>
         sdk.transactions.prepareCancel({

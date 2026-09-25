@@ -9,7 +9,7 @@ export interface MoneyFiSdkConfig {
 export const PRODUCTION_BASE_URL = "https://be.moneyfi.fund";
 export const DEFAULT_TIMEOUT_MS = 15_000;
 
-const SDK_KEY = /^mf_sdk_(test|live)_[A-Za-z0-9_-]{43}$/;
+const SDK_KEY = /^mf_sdk_(test|live)_[A-Za-z0-9_-]+$/;
 
 export interface ResolvedConfig {
   apiKey: string;
@@ -19,7 +19,7 @@ export interface ResolvedConfig {
 }
 
 export function resolveConfig(config: MoneyFiSdkConfig): ResolvedConfig {
-  if (!SDK_KEY.test(config.apiKey)) {
+  if (SDK_KEY.exec(config.apiKey)?.[0] !== config.apiKey) {
     throw new TypeError("apiKey is not a valid MoneyFi SDK key");
   }
 

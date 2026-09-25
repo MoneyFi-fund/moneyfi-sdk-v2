@@ -28,9 +28,10 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --sourcemap --clean",
     "test": "vitest run",
+    "test:package": "node scripts/smoke-package.mjs",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "pnpm test && pnpm typecheck && pnpm build"
+    "prepublishOnly": "pnpm test && pnpm typecheck && pnpm build && pnpm test:package"
   },
   "devDependencies": {
     "tsup": "^8.5.0",
